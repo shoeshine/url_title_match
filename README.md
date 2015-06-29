@@ -1,7 +1,7 @@
 URL Title Match
 ==================
 
-ExpressionEngine 2.+ accessory that forces the URL Title to match the Structure Page/Listing URL if the first character for the Structure URL is a digit or letter.
+ExpressionEngine 2.+ accessory that forces the URL Title and the Structure Page/Listing URL to match. When either input is updated and its first character is a digit or letter, the other will be updated to match.
 
 
 Installation

@@ -15,8 +15,8 @@ class Url_title_match_acc
 {
 	var $name	 		= 'URL Title Match';
 	var $id	 			= 'url_title_match';
-	var $version	 	= '1.0';
-	var $description	= 'Forces match of Structure URL and URL Title when first character for Structure URL is digit or letter.';
+	var $version	 	= '1.1';
+	var $description	= 'Forces match of Structure URL and URL Title when first character is a digit or letter.';
 	var $sections	 	= array();
 	
 	// --------------------------------------------------------------------
@@ -43,20 +43,39 @@ class Url_title_match_acc
 		$this->EE->cp->add_to_foot('
 			<script>
 				$(document).ready(function() {
+					
+					//	find our pair of url inputs, and setup some throttle timer variables
+					var $url_title		= $(\'input[name="url_title"]\'),
+						$structure_url	= $(\'input[name="structure__uri"]\'),
+						throttle_delay	= 250,
+						timer			= 0;
+					
+					
+					//	real basic throttling to keep our matching from running wild
+					function throttle_url_matching() {
+						clearTimeout(timer);
+						timer = setTimeout( $.proxy(match_url_titles,this), throttle_delay );
+					}
+					
+					
+					//	url matching magic			
 					function match_url_titles() {
-						var structure_url = $("#structure__uri").val();
-						var structure_first_char = structure_url.charAt(0);
-						var url_title = $("#url_title").val();
-
-						$(".publish_text input#url_title").each(function() {
-							// Only match if first character is alphanumeric
-							if ( /^[0-9A-Za-z]+$/.test(structure_first_char) ) {
-								$(this).val(structure_url);
-							}
-						});
+						var	$edited	= $(this);
+						
+						// Only match if first character is alphanumeric
+						if ( /^[0-9A-Za-z]+$/.test( $edited.val().charAt(0) )) {
+							//	loop both urls to see which is the other (ie not currently being edited)
+							$.each([$url_title, $structure_url], function(){
+								if( $edited.get(0) != this.get(0) )
+								{
+									this.val($edited.val());
+								}
+							});
+						}
 					}
 
-					// Check URL queries to see if we are on an edit entry page view, if so, fire away
+
+					// Check URL queries for given keys
 					var qs = (function(a) {
 					    if (a == "") return {};
 					    var b = {};
@@ -68,13 +87,13 @@ class Url_title_match_acc
 					    }
 					    return b;
 					})(window.location.search.substr(1).split("&"));
-					var entry_id = qs["entry_id"];
 					
-					if (entry_id) {
-						match_url_titles();
-						$(document).on("focus", "#structure__uri", match_url_titles);
-						$(document).on("change, keyup", "#structure__uri", match_url_titles);
+					
+					//	if we are on an edit entry page view, and our url pair inputs are present, fire away
+					if ( qs["entry_id"] && $url_title.length && $structure_url.length ) {
+						$("body").on("change keyup blur focus", "input[name=\'url_title\'], input[name=\'structure__uri\']", throttle_url_matching);
 					}
+					
 				});
 			</script>
 		');
